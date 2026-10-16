@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sistem KPI CoT - Politeknik Malaysia</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cot:#8B0000;--cot2:#660000;--cot3:#a00000;
+  --white:#fff;--bg:#F3F4F6;--border:#E5E7EB;
+  --text:#111827;--muted:#6B7280;--sm:12px;--base:13px;
+  --green:#16A34A;--green-l:#F0FDF4;
+  --amber:#D97706;--amber-l:#FFFBEB;
+  --blue:#2563EB;--blue-l:#EFF6FF;
+  --red-l:#FEF2F2;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:var(--base);overflow:hidden;height:100vh}
+#root{display:flex;height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:230px;min-width:230px;background:linear-gradient(to bottom,#8B0000,#660000);display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
+.sb-logo-area{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.15);display:flex;align-items:center;gap:10px}
+.sb-logo-img{width:42px;height:42px;border-radius:8px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden}
+.sb-logo-img img{width:100%;height:100%;object-fit:contain}
+.sb-logo-text .t1{color:#fff;font-size:11px;font-weight:800;letter-spacing:.3px;line-height:1.3}
+.sb-logo-text .t2{color:rgba(255,255,255,.65);font-size:9px;margin-top:1px;text-transform:uppercase;letter-spacing:.5px}
+.sb-cot-badge{margin:10px 14px;background:rgba(255,255,255,.12);border-radius:8px;padding:8px 12px}
+.sb-cot-badge .cot-name{color:#fff;font-size:11px;font-weight:700;line-height:1.3}
+.sb-cot-badge .cot-sub{color:rgba(255,255,255,.6);font-size:9px;margin-top:2px}
+.sb-section{padding:10px 16px 4px;color:rgba(255,255,255,.45);font-size:9px;text-transform:uppercase;letter-spacing:.8px;font-weight:700}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;color:rgba(255,255,255,.7);font-size:12.5px;font-weight:500;border-left:3px solid transparent;transition:all .15s;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.18);color:#fff;border-left-color:#fff}
+.nav-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:rgba(255,255,255,.25);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px}
+.sb-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.4);font-size:9px;margin-top:auto}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;min-width:0}
+
+/* TOPBAR */
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:54px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.tb-title{font-size:14px;font-weight:700;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-select{padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;background:#fff;outline:none;cursor:pointer;font-family:inherit}
+.tb-select:focus{border-color:var(--cot)}
+.quarter-tabs{display:flex;gap:3px}
+.qt-btn{padding:5px 11px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;background:#fff;font-weight:600;transition:all .15s;font-family:inherit}
+.qt-btn:hover{border-color:var(--cot);color:var(--cot)}
+.qt-btn.active{background:var(--cot);color:#fff;border-color:var(--cot)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:18px 20px 80px}
+
+/* SECTION HEADER */
+.sec-hdr{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.sec-hdr h2{font-size:14px;font-weight:800;color:var(--text);white-space:nowrap}
+.sec-line{flex:1;height:1px;background:var(--border)}
+.sec-badge{background:var(--red-l);color:var(--cot);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid #fecaca;white-space:nowrap}
+
+/* CARDS */
+.card{background:#fff;border-radius:10px;border:1px solid var(--border);padding:16px;margin-bottom:14px}
+.card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* KPI CARDS */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border-radius:10px;border:1px solid var(--border);padding:14px 16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:10px 0 0 10px}
+.kpi.red::before{background:var(--cot)}.kpi.green::before{background:var(--green)}.kpi.amber::before{background:var(--amber)}.kpi.blue::before{background:var(--blue)}
+.kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px}
+.kpi-val{font-size:24px;font-weight:800;margin-bottom:2px;line-height:1}
+.kpi.red .kpi-val{color:var(--cot)}.kpi.green .kpi-val{color:var(--green)}.kpi.amber .kpi-val{color:var(--amber)}.kpi.blue .kpi-val{color:var(--blue)}
+.kpi-sub{font-size:11px;color:var(--muted)}
+
+/* CLUSTER CARDS */
+.cluster-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+.cluster{background:#fff;border-radius:10px;border:1px solid var(--border);padding:14px}
+.cluster-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.cluster-name{font-size:12px;font-weight:700;color:var(--text)}
+.cluster-weight{font-size:10px;color:var(--muted);background:var(--bg);padding:2px 7px;border-radius:99px;font-weight:600}
+.cluster-score{font-size:22px;font-weight:800;color:var(--cot)}
+.cluster-max{font-size:12px;color:var(--muted)}
+.prog-outer{background:#f1f5f9;border-radius:99px;height:7px;margin-top:8px}
+.prog-inner{height:7px;border-radius:99px;transition:width .5s ease}
+
+/* ELEMENT TABS */
+.elem-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.et-btn{padding:7px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer;background:#fff;font-weight:600;transition:all .15s;font-family:inherit}
+.et-btn:hover{border-color:var(--cot);color:var(--cot)}
+.et-btn.active{background:var(--cot);color:#fff;border-color:var(--cot)}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px;font-family:inherit;line-height:1}
+.btn-cot{background:var(--cot);color:#fff}.btn-cot:hover{background:var(--cot2)}
+.btn-ghost{background:#f3f4f6;color:var(--text);border:1px solid var(--border)}.btn-ghost:hover{background:#e5e7eb}
+.btn-danger{background:var(--red-l);color:var(--cot);border:1px solid #fecaca}.btn-danger:hover{background:#fee2e2}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover{background:#15803d}
+.btn-amber{background:var(--amber);color:#fff}.btn-amber:hover{background:#b45309}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-xs{padding:3px 8px;font-size:10px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead tr{background:linear-gradient(90deg,#8B0000,#990000)}
+thead th{padding:9px 11px;text-align:left;color:#fff;font-size:11px;font-weight:600;white-space:nowrap}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s}
+tbody tr:hover{background:#fafafa}
+tbody td{padding:8px 11px;vertical-align:middle}
+.empty-row td{text-align:center;color:var(--muted);padding:24px!important;font-style:italic}
+
+/* BADGE */
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap}
+.bg-green{background:var(--green-l);color:var(--green)}
+.bg-amber{background:var(--amber-l);color:var(--amber)}
+.bg-blue{background:var(--blue-l);color:var(--blue)}
+.bg-red{background:var(--red-l);color:var(--cot)}
+.bg-gray{background:#f3f4f6;color:#374151}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(2px)}
+.modal{background:#fff;border-radius:12px;width:100%;max-width:700px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:14px;font-weight:700;color:var(--text)}
+.modal-close{background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted);line-height:1;padding:4px}
+.modal-close:hover{color:var(--cot)}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.span2{grid-column:span 2}
+.form-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.form-label .req{color:var(--cot)}
+.form-input{padding:8px 11px;border:1px solid var(--border);border-radius:7px;font-size:12px;outline:none;font-family:inherit;transition:border .15s;background:#fff}
+.form-input:focus{border-color:var(--cot);box-shadow:0 0 0 2px rgba(139,0,0,.08)}
+.form-input.error{border-color:var(--cot)}
+select.form-input{cursor:pointer}
+textarea.form-input{resize:vertical;min-height:60px}
+
+/* STICKY BAR */
+.sticky-bar{position:fixed;bottom:0;right:0;left:230px;background:#fff;border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:12px;z-index:100;box-shadow:0 -2px 12px rgba(0,0,0,.06)}
+.sb-label{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
+.sb-val{font-size:16px;font-weight:800;white-space:nowrap}
+.sb-prog-wrap{flex:1;background:#f1f5f9;border-radius:99px;height:10px;min-width:80px}
+.sb-prog-fill{height:10px;border-radius:99px;transition:width .5s}
+.sb-actions{display:flex;gap:8px;flex-shrink:0}
+
+/* LAMPIRAN F */
+.lf-table{width:100%;border-collapse:collapse;font-size:12px}
+.lf-table th,.lf-table td{padding:9px 12px;border:1px solid var(--border)}
+.lf-table thead tr{background:linear-gradient(90deg,#8B0000,#990000);color:#fff}
+.lf-table .cl-hdr td{background:#fef2f2;font-weight:700;color:var(--cot);border-left:4px solid var(--cot)}
+.lf-table .tot-row td{background:linear-gradient(90deg,#8B0000,#990000);color:#fff;font-weight:800;font-size:13px}
+.score-chip{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700}
+.chip-green{background:var(--green-l);color:var(--green)}
+.chip-amber{background:var(--amber-l);color:var(--amber)}
+.chip-red{background:var(--red-l);color:var(--cot)}
+
+/* VAL BLOCK */
+.val-block{background:#fff;border-radius:10px;border:1px solid var(--border);padding:16px;margin-bottom:12px}
+.val-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.val-title{font-size:13px;font-weight:700;color:var(--text)}
+.val-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.sig-box{border:2px dashed var(--border);border-radius:8px;padding:12px;text-align:center;color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s;flex:1}
+.sig-box:hover{border-color:var(--cot);color:var(--cot)}
+.sig-box.signed{border-color:var(--green);border-style:solid;background:var(--green-l);color:var(--green);font-weight:600}
+
+/* TOAST */
+.toast{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast-item{background:#1f2937;color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;animation:toastIn .2s ease;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast-item.success{background:var(--green)}.toast-item.error{background:var(--cot)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* CHART */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.chart-box{background:#fff;border-radius:10px;border:1px solid var(--border);padding:16px}
+.chart-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px}
+.chart-canvas{width:100%;height:230px}
+
+/* EVIDEN */
+.evid-row{display:flex;align-items:center;gap:8px}
+.evid-btn{padding:4px 10px;border:1px dashed var(--border);border-radius:6px;font-size:10px;cursor:pointer;background:#f9fafb;color:var(--muted);font-family:inherit;transition:all .15s}
+.evid-btn:hover{border-color:var(--cot);color:var(--cot)}
+
+/* INCOME TABLE */
+.income-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.income-tbl th,.income-tbl td{padding:9px 12px;border:1px solid var(--border);text-align:right}
+.income-tbl th:first-child,.income-tbl td:first-child{text-align:left}
+.income-tbl thead tr{background:linear-gradient(90deg,#8B0000,#990000);color:#fff}
+.income-tbl tfoot tr{background:#fef2f2;font-weight:700}
+
+/* PRINT */
+@media print{
+  .sidebar,.topbar,.sticky-bar,.btn,.modal-overlay{display:none!important}
+  .main{height:auto;overflow:visible}
+  .content{overflow:visible;padding:0}
+  body{overflow:visible;height:auto}
+  #root{display:block;height:auto}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ===================================================
+// CONSTANTS
+// ===================================================
+const COT_LIST = [
+  { id:'cmep', name:'CMeP - Centre for Mechanical Engineering Plastic', poly:'POLIMAS' },
+  { id:'ctop', name:'CToP - Centre of Town and Regional Planning', poly:'POLIMAS' },
+];
+const QUARTERS = [1,2,3,4];
+
+const ELEMENT_DEFS = {
+  collab: {
+    label:'1.1 Kolaborasi Aktif',
+    fields:[
+      {key:'rakan',label:'Rakan Kolaborasi',type:'text',req:true},
+      {key:'tajuk',label:'Tajuk Projek',type:'text',req:true},
+      {key:'skop',label:'Skop Kerjasama',type:'textarea'},
+      {key:'mula',label:'Tarikh Mula',type:'date'},
+      {key:'tamat',label:'Tarikh Tamat',type:'date'},
+      {key:'status',label:'Status',type:'select',opts:['Selesai','On-Progress'],req:true},
+      {key:'impak',label:'Impak / Faedah',type:'textarea'},
+      {key:'isu',label:'Isu / Cabaran',type:'textarea'},
+      {key:'nilai',label:'Nilai Kewangan (RM)',type:'number'},
+    ]
+  },
+  ktp: {
+    label:'1.2 Knowledge Transfer Project (KTP)',
+    fields:[
+      {key:'jenis',label:'Jenis KTP',type:'select',opts:['Sharing Expertise','Student Attachment','Industry Immersion','Staff Training','Others'],req:true},
+      {key:'tajuk',label:'Tajuk Projek',type:'text',req:true},
+      {key:'rakan',label:'Rakan Industri',type:'text',req:true},
+      {key:'skop',label:'Skop',type:'textarea'},
+      {key:'tarikh',label:'Tarikh',type:'date'},
+      {key:'status',label:'Status',type:'select',opts:['Selesai','On-Progress']},
+      {key:'impak',label:'Impak',type:'textarea'},
+      {key:'isu',label:'Isu / Cabaran',type:'textarea'},
+      {key:'nilai',label:'Pendapatan (RM)',type:'number'},
+    ]
+  },
+  ri_proposal: {
+    label:'2.1 Proposal Penyelidikan',
+    fields:[
+      {key:'tajuk',label:'Tajuk Penyelidikan',type:'text',req:true},
+      {key:'ketua',label:'Ketua Penyelidik',type:'text',req:true},
+      {key:'rakan',label:'Rakan Kolaborasi',type:'text'},
+      {key:'tarikh',label:'Tarikh Hantar',type:'date'},
+      {key:'status',label:'Status',type:'select',opts:['Selesai','Dalam Proses','Ditolak'],req:true},
+      {key:'dep',label:'Sokongan DEP',type:'select',opts:['Ya','Tidak','Dalam Proses']},
+      {key:'geran',label:'Jumlah Geran Dipohon (RM)',type:'number'},
+    ]
+  },
+  ri_selesai: {
+    label:'2.2 Projek R&I Selesai',
+    fields:[
+      {key:'tajuk',label:'Tajuk Projek',type:'text',req:true},
+      {key:'sinopsis',label:'Sinopsis',type:'textarea'},
+      {key:'tujuan',label:'Tujuan Kajian',type:'textarea'},
+      {key:'pembangunan',label:'Status Pembangunan',type:'select',opts:['Prototaip','Produk','Kajian','Perisian','Lain-lain']},
+      {key:'mula',label:'Tarikh Mula',type:'date'},
+      {key:'tamat',label:'Tarikh Tamat',type:'date'},
+      {key:'impak',label:'Hasil / Impak',type:'textarea'},
+      {key:'cabaran',label:'Cabaran & Lesson Learned',type:'textarea'},
+    ]
+  },
+  ri_geran: {
+    label:'2.3 Geran Penyelidikan Diperoleh',
+    fields:[
+      {key:'tajuk',label:'Tajuk Penyelidikan',type:'text',req:true},
+      {key:'ketua',label:'Ketua Projek',type:'text',req:true},
+      {key:'penaja',label:'Penaja / Kolaborator',type:'text'},
+      {key:'tarikh',label:'Tarikh Diterima',type:'date'},
+      {key:'status',label:'Status',type:'select',opts:['Diterima','Dalam Proses']},
+      {key:'dep',label:'Sokongan DEP',type:'select',opts:['Ya','Tidak']},
+      {key:'nilai',label:'Nilai Geran (RM)',type:'number',req:true},
+    ]
+  },
+  expert: {
+    label:'3.1 Perkhidmatan Perundingan',
+    fields:[
+      {key:'klien',label:'Klien / Syarikat',type:'text',req:true},
+      {key:'skop',label:'Skop Khidmat Kepakaran',type:'textarea',req:true},
+      {key:'mula',label:'Tarikh Mula',type:'date'},
+      {key:'tamat',label:'Tarikh Tamat',type:'date'},
+      {key:'status',label:'Status',type:'select',opts:['Completed','Ongoing'],req:true},
+      {key:'impak',label:'Impak / Faedah',type:'textarea'},
+      {key:'isu',label:'Isu / Cabaran',type:'textarea'},
+      {key:'nilai',label:'Pendapatan (RM)',type:'number'},
+    ]
+  },
+  pub: {
+    label:'4.1 Penerbitan',
+    fields:[
+      {key:'kategori',label:'Kategori',type:'select',opts:['Indexed Journal','Seminar Proceeding','Books/ISBN','Bulletin/ISSN'],req:true},
+      {key:'tajuk',label:'Tajuk Kertas / Buku',type:'text',req:true},
+      {key:'penulis',label:'Senarai Penulis',type:'text'},
+      {key:'penerbit',label:'Penerbit & e-ISBN/ISSN',type:'text'},
+      {key:'tarikh',label:'Tarikh Terbit',type:'date'},
+      {key:'status',label:'Status',type:'select',opts:['Published','Not-Published']},
+      {key:'nilai',label:'Nilai Terjual (RM)',type:'number'},
+    ]
+  },
+  award: {
+    label:'5.1 Pengiktirafan & Anugerah',
+    fields:[
+      {key:'peringkat',label:'Peringkat',type:'select',opts:['International','National','Polytechnic'],req:true},
+      {key:'tajuk',label:'Tajuk Inovasi / Pingat',type:'text',req:true},
+      {key:'skop',label:'Skop',type:'select',opts:['R&I','T&L','Expert Services']},
+      {key:'sinopsis',label:'Sinopsis Inovasi',type:'textarea'},
+      {key:'badan',label:'Badan Penganugerah',type:'text'},
+      {key:'tarikh',label:'Tarikh',type:'date'},
+      {key:'nilai',label:'Hadiah Tunai (RM)',type:'number'},
+    ]
+  },
+  tl_bahan: {
+    label:'6.1 Bahan / Modul PdP',
+    fields:[
+      {key:'tajuk',label:'Tajuk Bahan',type:'text',req:true},
+      {key:'jenis',label:'Jenis Bahan',type:'select',opts:['eBook','Alat Bantu Mengajar','Model AI','Video','Modul','Lain-lain'],req:true},
+      {key:'tujuan',label:'Tujuan Pembelajaran',type:'textarea'},
+      {key:'status',label:'Status',type:'select',opts:['Diluluskan','Dalam Proses','Draf']},
+      {key:'tempoh',label:'Tempoh',type:'text'},
+      {key:'dep',label:'Pengesahan DEP',type:'select',opts:['Ya','Tidak','Dalam Proses']},
+      {key:'impak',label:'Impak kepada Pelajar',type:'textarea'},
+      {key:'nilai',label:'Pendapatan (RM)',type:'number'},
+    ]
+  },
+  tl_latihan: {
+    label:'6.2 Program Latihan',
+    fields:[
+      {key:'tajuk',label:'Tajuk Program',type:'text',req:true},
+      {key:'bidang',label:'Bidang / Disiplin',type:'text'},
+      {key:'sasaran',label:'Rakan / Sasaran',type:'text'},
+      {key:'peserta',label:'Bilangan Peserta',type:'number'},
+      {key:'penceramah',label:'Nama Penceramah',type:'text'},
+      {key:'tarikh',label:'Tarikh & Masa',type:'date'},
+      {key:'lokasi',label:'Lokasi / Makmal',type:'text'},
+      {key:'impak',label:'Impak',type:'textarea'},
+      {key:'yuran',label:'Yuran Terkumpul (RM)',type:'number'},
+    ]
+  },
+};
+
+const INCOME_SOURCES = ['Research','Innovations','Teaching & Learning','Expert Services','Collaborations','Publications','Recognitions','Others'];
+
+// ===================================================
+// STORAGE HELPERS
+// ===================================================
+const storageKey = (cotId, year, quarter, section) => `cot_kpi_${cotId}_${year}_q${quarter}_${section}`;
+
+function loadData(cotId, year, quarter, section) {
+  try {
+    const raw = localStorage.getItem(storageKey(cotId, year, quarter, section));
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveData(cotId, year, quarter, section, data) {
+  localStorage.setItem(storageKey(cotId, year, quarter, section), JSON.stringify(data));
+}
+
+function loadObj(cotId, year, quarter, section, def) {
+  try {
+    const raw = localStorage.getItem(storageKey(cotId, year, quarter, section));
+    return raw ? JSON.parse(raw) : def;
+  } catch { return def; }
+}
+
+function saveObj(cotId, year, quarter, section, obj) {
+  localStorage.setItem(storageKey(cotId, year, quarter, section), JSON.stringify(obj));
+}
+
+// ===================================================
+// SCORING ENGINE
+// ===================================================
+function calcScores(data) {
+  const collab = data.collab || [];
+  const ktp = data.ktp || [];
+  const riProp = data.ri_proposal || [];
+  const riDone = data.ri_selesai || [];
+  const riGrant = data.ri_geran || [];
+  const expert = data.expert || [];
+  const pub = data.pub || [];
+  const award = data.award || [];
+  const tlBahan = data.tl_bahan || [];
+  const tlLatihan = data.tl_latihan || [];
+  const incomeTotal = (data.income || []).reduce((s,r) => s + (parseFloat(r.gen)||0) + (parseFloat(r.end)||0) + (parseFloat(r.grant)||0) + (parseFloat(r.spon)||0), 0);
+
+  // Cluster 1
+  const rakanCounts = {};
+  collab.forEach(r => { const k = (r.rakan||'').trim().toLowerCase(); if(k) rakanCounts[k] = (rakanCounts[k]||0)+1; });
+  const qualRakan = Object.values(rakanCounts).filter(c=>c>=2).length;
+  const s1_1 = qualRakan>=4?10:qualRakan===3?7:qualRakan===2?5:qualRakan===1?3:0;
+  const ktpCount = ktp.length;
+  const s1_2 = ktpCount>=4?10:ktpCount===3?8:ktpCount===2?4:0;
+  const c1 = Math.min(20, s1_1+s1_2);
+
+  // Cluster 2
+  const propSelesai = riProp.filter(r=>r.status==='Selesai').length;
+  const s2_1 = Math.min(15, propSelesai*3);
+  const s2_2 = Math.min(10, riDone.length*2);
+  const s2_3 = Math.min(5, riGrant.length*5);
+  const esComp = expert.filter(r=>r.status==='Completed').length;
+  const esOngoing = expert.filter(r=>r.status==='Ongoing').length;
+  const s2_4 = Math.min(30, esComp*5+esOngoing*2);
+  const c2 = Math.min(40, s2_1+s2_2+s2_3+s2_4);
+
+  // Cluster 3
+  const indexed = pub.filter(r=>r.kategori==='Indexed Journal').length;
+  const proceeding = pub.filter(r=>r.kategori==='Seminar Proceeding').length;
+  const books = pub.filter(r=>r.kategori==='Books/ISBN'||r.kategori==='Bulletin/ISSN').length;
+  const s3_1 = Math.min(15, indexed*4+proceeding*2+books*5);
+  const intl = award.filter(r=>r.peringkat==='International').length;
+  const natl = award.filter(r=>r.peringkat==='National').length;
+  const poly = award.filter(r=>r.peringkat==='Polytechnic').length;
+  const s3_2 = Math.min(15, intl*5+natl*3+poly*1);
+  const c3 = Math.min(20, s3_1+s3_2);
+
+  // Cluster 4
+  const s4_tl = Math.min(15, tlBahan.length*3+tlLatihan.length*2);
+  const s4_inc = incomeTotal>=100000?15:incomeTotal>=70000?13:incomeTotal>=30000?9:incomeTotal>=5000?5:0;
+  const c4 = Math.min(20, s4_tl+s4_inc);
+
+  return {
+    c1,c2,c3,c4,total:c1+c2+c3+c4,
+    s1_1,s1_2,s2_1,s2_2,s2_3,s2_4,s3_1,s3_2,s4_tl,s4_inc,
+    qualRakan,ktpCount,propSelesai,riDoneCount:riDone.length,riGrantCount:riGrant.length,
+    esComp,esOngoing,indexed,proceeding,books,intl,natl,poly,
+    tlBahanCount:tlBahan.length,tlLatihanCount:tlLatihan.length,incomeTotal
+  };
+}
+
+function scoreColor(v, max) {
+  const p = v/max;
+  if(p>=0.75) return 'var(--green)';
+  if(p>=0.5) return 'var(--amber)';
+  return 'var(--cot)';
+}
+function scoreChipClass(v, max) {
+  const p=v/max;
+  if(p>=0.75) return 'chip-green';
+  if(p>=0.5) return 'chip-amber';
+  return 'chip-red';
+}
+
+// ===================================================
+// SAMPLE DATA GENERATORS
+// ===================================================
+function sampleCMeP() {
+  return {
+    collab:[
+      {id:'c1',rakan:'ABC Plastics Sdn Bhd',tajuk:'Pembangunan Acuan Plastik Presisi',skop:'Reka Bentuk & Pengujian Acuan',mula:'2025-01-10',tamat:'2025-06-30',status:'Selesai',impak:'Meningkatkan kecekapan pengeluaran 30%',isu:'Kelewatan bahan mentah',nilai:15000},
+      {id:'c2',rakan:'ABC Plastics Sdn Bhd',tajuk:'Kajian Rintis Proses Molding Suhu Tinggi',skop:'Analisis Proses',mula:'2025-03-01',tamat:'2025-09-30',status:'On-Progress',impak:'Pengurangan kecacatan produk',isu:'-',nilai:8000},
+      {id:'c3',rakan:'DEF Engineering Works',tajuk:'Optimasi Proses Injection Moulding',skop:'Kajian Parameter',mula:'2025-02-01',tamat:'2025-08-31',status:'On-Progress',impak:'Jimat kos tenaga 15%',isu:'Kepakaran terhad',nilai:12000},
+      {id:'c4',rakan:'DEF Engineering Works',tajuk:'Program Jalinan Industri Semester 3',skop:'Lawatan & Bengkel',mula:'2025-04-15',tamat:'2025-05-15',status:'Selesai',impak:'Pendedahan pelajar kepada industri sebenar',isu:'-',nilai:3000},
+    ],
+    ktp:[
+      {id:'k1',jenis:'Industry Immersion',tajuk:'Pendedahan Proses Injection Moulding',rakan:'ABC Plastics Sdn Bhd',skop:'Staf CoT menjalani imersif 2 minggu',tarikh:'2025-03-15',status:'Selesai',impak:'Kemahiran teknikal staf meningkat',isu:'-',nilai:0},
+      {id:'k2',jenis:'Sharing Expertise',tajuk:'Ceramah Teknologi Acuan Terkini',rakan:'DEF Engineering Works',skop:'Pakar industri berkongsi kepakaran',tarikh:'2025-05-20',status:'Selesai',impak:'Pelajar dan staf mendapat ilmu terkini',isu:'-',nilai:0},
+      {id:'k3',jenis:'Student Attachment',tajuk:'Latihan Industri Pelajar DM501',rakan:'GH Precision Engineering',skop:'Pelajar menjalani latihan 10 minggu',tarikh:'2025-06-01',status:'On-Progress',impak:'Kemahiran praktikal pelajar',isu:'Kurang pemantauan',nilai:0},
+    ],
+    ri_proposal:[
+      {id:'rp1',tajuk:'Kajian Pengoptimuman Parameter Acuan Plastik HDPE',ketua:'Dr. Ahmad Fauzi',rakan:'POLIMAS-ABC',tarikh:'2025-02-28',status:'Selesai',dep:'Ya',geran:50000},
+      {id:'rp2',tajuk:'Pembangunan Sistem Pemantauan Acuan Pintar (Smart Mould)',ketua:'Dr. Siti Aminah',rakan:'DEF Engineering',tarikh:'2025-04-15',status:'Dalam Proses',dep:'Ya',geran:80000},
+    ],
+    ri_selesai:[
+      {id:'rs1',tajuk:'Prototaip Sistem Kawalan Suhu Acuan Plastik Automatik',sinopsis:'Sistem kawalan suhu automatik menggunakan sensor IoT untuk acuan plastik',tujuan:'Mengurangkan kadar kecacatan produk plastik',pembangunan:'Prototaip',mula:'2024-09-01',tamat:'2025-03-31',impak:'Pengurangan kecacatan 25%, jimat kos RM 12,000 setahun',cabaran:'Integrasi sensor dengan sistem sedia ada memerlukan pengubahsuaian'},
+    ],
+    ri_geran:[
+      {id:'rg1',tajuk:'Smart Mould Monitoring System untuk Industri Plastik',ketua:'Dr. Ahmad Fauzi',penaja:'MOSTI',tarikh:'2025-01-15',status:'Diterima',dep:'Ya',nilai:75000},
+    ],
+    expert:[
+      {id:'e1',klien:'GH Precision Engineering Sdn Bhd',skop:'Perundingan Reka Bentuk Acuan untuk Komponen Automotif',mula:'2025-02-01',tamat:'2025-04-30',status:'Completed',impak:'Klien berjaya membangunkan acuan baharu',isu:'-',nilai:8500},
+      {id:'e2',klien:'IJ Plastic Industries',skop:'Khidmat Pengujian Kualiti Produk Plastik',mula:'2025-05-01',tamat:'2025-12-31',status:'Ongoing',impak:'Peningkatan kualiti produk',isu:'Jadual ujian ketat',nilai:12000},
+    ],
+    pub:[
+      {id:'p1',kategori:'Indexed Journal',tajuk:'Optimization of Plastic Injection Moulding Parameters Using Taguchi Method',penulis:'Ahmad Fauzi, Siti Aminah, Razali Ibrahim',penerbit:'Journal of Polymer Engineering (Scopus)',tarikh:'2025-03-15',status:'Published',nilai:0},
+      {id:'p2',kategori:'Seminar Proceeding',tajuk:'Smart Monitoring System for Plastic Mould Temperature Control',penulis:'Siti Aminah, Ahmad Fauzi',penerbit:'POLIMAS International Conference 2025',tarikh:'2025-05-20',status:'Published',nilai:0},
+    ],
+    award:[
+      {id:'a1',peringkat:'National',tajuk:'Anugerah Inovasi TVET Emas 2025',skop:'R&I',sinopsis:'Sistem kawalan suhu acuan plastik automatik berasaskan IoT',badan:'Jabatan Pendidikan Politeknik & Kolej Komuniti (JPKK)',tarikh:'2025-04-28',nilai:3000},
+      {id:'a2',peringkat:'International',tajuk:'Gold Medal - International Invention & Innovation 2025',skop:'R&I',sinopsis:'Smart Mould Monitoring System',badan:'International Federation of Inventors Associations (IFIA)',tarikh:'2025-05-15',nilai:5000},
+    ],
+    tl_bahan:[
+      {id:'tb1',tajuk:'Modul Interaktif: Asas Reka Bentuk Acuan Plastik',jenis:'eBook',tujuan:'Membantu pelajar memahami prinsip asas reka bentuk acuan',status:'Diluluskan',tempoh:'16 Minggu',dep:'Ya',impak:'80% pelajar mencapai gred A',nilai:0},
+      {id:'tb2',tajuk:'Model AI Pembantu Pengiraan Parameter Moulding',jenis:'Model AI',tujuan:'Memberi cadangan parameter optimum kepada pelajar',status:'Dalam Proses',tempoh:'8 Minggu',dep:'Dalam Proses',impak:'Dijangka meningkatkan kefahaman 40%',nilai:0},
+    ],
+    tl_latihan:[
+      {id:'tl1',tajuk:'Bengkel Teknologi Acuan Plastik Masa Kini',bidang:'Kejuruteraan Mekanikal',sasaran:'Staf Akademik & Pelajar Tahun 3',peserta:45,penceramah:'Dr. Ahmad Fauzi, Ir. Razali',tarikh:'2025-05-10',lokasi:'Makmal Teknologi Acuan, POLIMAS',impak:'Peningkatan kemahiran teknikal peserta',yuran:13500},
+    ],
+    income:[
+      {id:'i1',source:'Research',butiran:'Geran MOSTI Smart Mould',gen:0,end:0,grant:75000,spon:0},
+      {id:'i2',source:'Expert Services',butiran:'Perundingan GH Precision + IJ Plastics',gen:20500,end:0,grant:0,spon:0},
+      {id:'i3',source:'Collaborations',butiran:'Projek kolaborasi industri',gen:38000,end:0,grant:0,spon:0},
+      {id:'i4',source:'Teaching & Learning',butiran:'Yuran bengkel',gen:13500,end:0,grant:0,spon:0},
+    ],
+  };
+}
+
+function sampleCToP() {
+  return {
+    collab:[
+      {id:'c1',rakan:'Majlis Bandaraya Alor Setar',tajuk:'Kajian Pembangunan Pelan Guna Tanah Lestari',skop:'Analisis dan Pelan Bandar',mula:'2025-01-05',tamat:'2025-07-31',status:'On-Progress',impak:'Rancangan pembangunan yang lebih lestari',isu:'Data GIS tidak lengkap',nilai:25000},
+      {id:'c2',rakan:'Majlis Bandaraya Alor Setar',tajuk:'Bengkel Perancangan Bandar Mampan',skop:'Latihan pegawai bandar',mula:'2025-03-10',tamat:'2025-03-12',status:'Selesai',impak:'Peningkatan kemahiran 50 pegawai',isu:'-',nilai:8000},
+      {id:'c3',rakan:'Jabatan Perancangan Bandar Kedah',tajuk:'Kajian Impak Pembangunan Sempadan Bandar',skop:'Kajian Lapangan & Analisis GIS',mula:'2025-02-20',tamat:'2025-09-30',status:'On-Progress',impak:'Data asas untuk dasar bandar',isu:'Kerjasama data antara agensi',nilai:18000},
+    ],
+    ktp:[
+      {id:'k1',jenis:'Sharing Expertise',tajuk:'Perkongsian Ilmu: GIS dalam Perancangan Bandar',rakan:'Jabatan Perancangan Bandar Kedah',skop:'Ceramah dan demonstrasi GIS',tarikh:'2025-04-05',status:'Selesai',impak:'50 peserta mendapat kemahiran GIS asas',isu:'-',nilai:0},
+      {id:'k2',jenis:'Student Attachment',tajuk:'Latihan Industri Pelajar Perancangan Bandar',rakan:'Majlis Bandaraya Alor Setar',skop:'Pelajar terlibat dalam projek perancangan sebenar',tarikh:'2025-06-01',status:'On-Progress',impak:'Pengalaman praktikal pelajar',isu:'Kurangnya projek aktif',nilai:0},
+    ],
+    ri_proposal:[
+      {id:'rp1',tajuk:'Kajian Kesesuaian Tanah untuk Pembangunan Perumahan Mampu Milik Alor Setar',ketua:'Pn. Izzatul Husna',rakan:'DBKL',tarikh:'2025-03-01',status:'Selesai',dep:'Ya',geran:60000},
+    ],
+    ri_selesai:[],
+    ri_geran:[],
+    expert:[
+      {id:'e1',klien:'Perbadanan PR1MA Malaysia',skop:'Kajian Lokasi Strategik Pembangunan Perumahan Mampu Milik',mula:'2025-02-01',tamat:'2025-06-30',status:'Ongoing',impak:'Data untuk 3 kawasan cadangan',isu:'-',nilai:30000},
+    ],
+    pub:[
+      {id:'p1',kategori:'Seminar Proceeding',tajuk:'Urban Heat Island Mitigation Through Green Infrastructure Planning',penulis:'Izzatul Husna, Ahmad Razif',penerbit:'National Town Planning Conference 2025',tarikh:'2025-04-20',status:'Published',nilai:0},
+    ],
+    award:[
+      {id:'a1',peringkat:'Polytechnic',tajuk:'Anugerah Penyelidikan Terbaik Politeknik Malaysia 2025',skop:'R&I',sinopsis:'Kajian GIS untuk perancangan bandar mampan',badan:'JPKK',tarikh:'2025-05-30',nilai:1000},
+    ],
+    tl_bahan:[
+      {id:'tb1',tajuk:'Manual Praktikal: Penggunaan GIS untuk Perancangan Bandar',jenis:'Modul',tujuan:'Panduan penggunaan perisian GIS dalam persekitaran akademik',status:'Diluluskan',tempoh:'Satu Semester',dep:'Ya',impak:'Pelajar mahir menggunakan ArcGIS',nilai:0},
+    ],
+    tl_latihan:[
+      {id:'tl1',tajuk:'Kursus Perancangan Bandar Lestari untuk Pegawai Kerajaan Tempatan',bidang:'Perancangan Bandar & Wilayah',sasaran:'Pegawai Majlis Tempatan Kedah',peserta:30,penceramah:'Pn. Izzatul Husna, Tn. Ahmad Razif',tarikh:'2025-06-15',lokasi:'Bilik Seminar POLIMAS',impak:'Peningkatan kefahaman pegawai tentang pembangunan lestari',yuran:9000},
+    ],
+    income:[
+      {id:'i1',source:'Expert Services',butiran:'Kajian Lokasi PR1MA',gen:30000,end:0,grant:0,spon:0},
+      {id:'i2',source:'Collaborations',butiran:'Projek kolaborasi dengan pihak berkuasa tempatan',gen:51000,end:0,grant:0,spon:0},
+      {id:'i3',source:'Teaching & Learning',butiran:'Yuran kursus pegawai kerajaan',gen:9000,end:0,grant:0,spon:0},
+    ],
+  };
+}
+
+// ===================================================
+// TOAST
+// ===================================================
+let toastSetFn = null;
+function showToast(msg, type='success') {
+  if(toastSetFn) toastSetFn(prev=>[...prev,{id:Date.now(),msg,type}]);
+  setTimeout(()=>{
+    if(toastSetFn) toastSetFn(prev=>prev.slice(1));
+  },2800);
+}
+
+function ToastContainer() {
+  const [toasts,setToasts] = useState([]);
+  useEffect(()=>{ toastSetFn=setToasts; return()=>{toastSetFn=null}; },[]);
+  return <div className="toast">{toasts.map(t=><div key={t.id} className={`toast-item ${t.type}`}>{t.type==='success'?'✅':'❌'} {t.msg}</div>)}</div>;
+}
+
+// ===================================================
+// MODAL FORM
+// ===================================================
+function ModalForm({ section, record, onSave, onClose }) {
+  const def = ELEMENT_DEFS[section];
+  const [form, setForm] = useState(() => {
+    const init = {};
+    def.fields.forEach(f=>{ init[f.key] = record?.[f.key] ?? (f.type==='number'?'':f.type==='select'?(f.opts[0]):''); });
+    return init;
+  });
+  const [errors, setErrors] = useState({});
+
+  function validate() {
+    const errs={};
+    def.fields.filter(f=>f.req).forEach(f=>{ if(!form[f.key] || form[f.key]==='' ) errs[f.key]=true; });
+    setErrors(errs);
+    return Object.keys(errs).length===0;
+  }
+
+  function handleSave() {
+    if(!validate()) { showToast('Sila isi medan bertanda * sebelum menyimpan','error'); return; }
+    onSave({...form, id: record?.id || 'r_'+Date.now()});
+    onClose();
+    showToast(record?'Rekod berjaya dikemas kini!':'Rekod berjaya ditambah!');
+  }
+
+  return (
+    <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-header">
+          <span className="modal-title">{record?'✏️ Edit':'➕ Tambah'} - {def.label}</span>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="form-grid">
+            {def.fields.map(f=>{
+              const full = f.type==='textarea';
+              return (
+                <div key={f.key} className={`form-group${full?' span2':''}`}>
+                  <label className="form-label">{f.label}{f.req&&<span className="req"> *</span>}</label>
+                  {f.type==='select'?(
+                    <select className={`form-input${errors[f.key]?' error':''}`} value={form[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}>
+                      {f.opts.map(o=><option key={o}>{o}</option>)}
+                    </select>
+                  ):f.type==='textarea'?(
+                    <textarea className={`form-input${errors[f.key]?' error':''}`} rows={3} value={form[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))} placeholder={f.label}/>
+                  ):(
+                    <input className={`form-input${errors[f.key]?' error':''}`} type={f.type||'text'} value={form[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))} placeholder={f.type==='number'?'0':f.label} min={f.type==='number'?'0':undefined}/>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-ghost" onClick={onClose}>Batal</button>
+          <button className="btn btn-cot" onClick={handleSave}>{record?'💾 Kemas Kini':'➕ Simpan Rekod'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===================================================
+// CRUD TABLE
+// ===================================================
+function CRUDTable({ section, rows, onAdd, onEdit, onDelete, scoreLabel, scoreValue, colKeys }) {
+  const def = ELEMENT_DEFS[section];
+  const displayCols = colKeys || def.fields.slice(0,5).map(f=>f.key);
+  const colDefs = def.fields.filter(f=>displayCols.includes(f.key));
+
+  return (
+    <div className="card">
+      <div className="card-title">
+        <span>{def.label}</span>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          {scoreLabel && <span className="badge bg-red" style={{fontSize:11}}>{scoreLabel}: {scoreValue} mata</span>}
+          <span className="badge bg-gray">{rows.length} rekod</span>
+          <button className="btn btn-cot btn-sm" onClick={onAdd}>➕ Tambah</button>
+        </div>
+      </div>
+      <div className="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th style={{width:36}}>#</th>
+            {colDefs.map(f=><th key={f.key}>{f.label}</th>)}
+            <th style={{width:100}}>Aksi</th>
+          </tr></thead>
+          <tbody>
+            {rows.length===0 && <tr className="empty-row"><td colSpan={colDefs.length+2}>Tiada rekod. Klik <b>Tambah</b> untuk menambah rekod baharu.</td></tr>}
+            {rows.map((r,i)=>(
+              <tr key={r.id}>
+                <td style={{color:'var(--muted)',fontSize:11}}>{i+1}</td>
+                {colDefs.map(f=>{
+                  const v = r[f.key]??'-';
+                  if(f.key==='status') {
+                    const cls = ['Selesai','Completed','Published','Diterima','Diluluskan'].includes(v)?'bg-green':['On-Progress','Ongoing','Dalam Proses'].includes(v)?'bg-amber':'bg-gray';
+                    return <td key={f.key}><span className={`badge ${cls}`}>{v}</span></td>;
+                  }
+                  if(f.key==='peringkat'||f.key==='kategori') {
+                    const cls = v==='International'||v==='Indexed Journal'?'bg-blue':v==='National'||v==='Seminar Proceeding'?'bg-amber':'bg-gray';
+                    return <td key={f.key}><span className={`badge ${cls}`}>{v}</span></td>;
+                  }
+                  if(f.type==='number'&&v&&v!=='-') return <td key={f.key} style={{color:'var(--green)',fontWeight:600}}>RM {parseFloat(v).toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>;
+                  if(f.type==='textarea') return <td key={f.key} style={{maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--muted)'}}>{v}</td>;
+                  return <td key={f.key}>{v||'-'}</td>;
+                })}
+                <td>
+                  <div style={{display:'flex',gap:4}}>
+                    <button className="btn btn-ghost btn-xs" onClick={()=>onEdit(r)}>✏️</button>
+                    <button className="btn btn-danger btn-xs" onClick={()=>{ if(confirm('Padam rekod ini?')) onDelete(r.id); }}>🗑️</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ===================================================
+// INCOME TABLE COMPONENT
+// ===================================================
+function IncomeSection({ rows, onChange, scoreValue }) {
+  function updateCell(id, field, val) {
+    const updated = rows.map(r=>r.id===id?{...r,[field]:val}:r);
+    onChange(updated);
+  }
+  const totals = { gen:0,end:0,grant:0,spon:0,total:0 };
+  rows.forEach(r=>{
+    ['gen','end','grant','spon'].forEach(k=>{ totals[k]+=(parseFloat(r[k])||0); });
+    totals.total += (parseFloat(r.gen)||0)+(parseFloat(r.end)||0)+(parseFloat(r.grant)||0)+(parseFloat(r.spon)||0);
+  });
+  const fmt = v => 'RM '+v.toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  return (
+    <div className="card">
+      <div className="card-title">
+        <span>7.1 Ringkasan Penjanaan Pendapatan</span>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <span className="badge bg-red" style={{fontSize:11}}>Skor Semasa: {scoreValue} mata</span>
+          <span className="badge" style={{background:totals.total>=100000?'var(--green-l)':totals.total>=30000?'var(--amber-l)':'var(--red-l)',color:totals.total>=100000?'var(--green)':totals.total>=30000?'var(--amber)':'var(--cot)',fontSize:11}}>Jumlah: {fmt(totals.total)}</span>
+        </div>
+      </div>
+      <div style={{overflow:'auto'}}>
+        <table className="income-tbl">
+          <thead><tr><th>Sumber Pendapatan</th><th>Butiran</th><th>Jana Pendapatan (RM)</th><th>Endowmen (RM)</th><th>Geran (RM)</th><th>Tajaan (RM)</th><th>Jumlah (RM)</th></tr></thead>
+          <tbody>
+            {rows.map(r=>{
+              const rowTotal=(parseFloat(r.gen)||0)+(parseFloat(r.end)||0)+(parseFloat(r.grant)||0)+(parseFloat(r.spon)||0);
+              return (
+                <tr key={r.id}>
+                  <td style={{fontWeight:600}}>{r.source}</td>
+                  <td><input className="form-input" style={{minWidth:140}} value={r.butiran||''} onChange={e=>updateCell(r.id,'butiran',e.target.value)} placeholder="Huraian..."/></td>
+                  {['gen','end','grant','spon'].map(k=>(
+                    <td key={k}><input className="form-input" type="number" min="0" style={{width:110,textAlign:'right'}} value={r[k]||''} onChange={e=>updateCell(r.id,k,e.target.value)} placeholder="0.00"/></td>
+                  ))}
+                  <td style={{fontWeight:700,color:'var(--cot)'}}>{fmt(rowTotal)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colSpan={2}>JUMLAH KESELURUHAN</td>
+              <td style={{color:totals.total>=100000?'var(--green)':'inherit'}}>{fmt(totals.gen)}</td>
+              <td>{fmt(totals.end)}</td>
+              <td>{fmt(totals.grant)}</td>
+              <td>{fmt(totals.spon)}</td>
+              <td style={{color:totals.total>=100000?'var(--green)':'var(--cot)',fontSize:13}}>{fmt(totals.total)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div style={{marginTop:12,padding:'10px 14px',background:'var(--amber-l)',borderRadius:8,border:'1px solid #fde68a',fontSize:12}}>
+        <b style={{color:'var(--amber)'}}>📌 Sasaran Pendapatan: RM 100,000</b>
+        <span style={{color:'var(--muted)',marginLeft:8}}>
+          {totals.total>=100000?'✅ Sasaran tercapai! (15 mata)':totals.total>=70000?`🟡 ${fmt(100000-totals.total)} lagi untuk mencapai 15 mata`:`Perlu RM ${fmt(100000-totals.total)} lagi untuk sasaran`}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ===================================================
+// CHART COMPONENT
+// ===================================================
+function EChart({ id, option }) {
+  const ref = useRef(null);
+  const chartRef = useRef(null);
+
+  useEffect(()=>{
+    if(!ref.current) return;
+    chartRef.current = echarts.init(ref.current);
+    chartRef.current.setOption(option);
+    const ro = new ResizeObserver(()=>chartRef.current?.resize());
+    ro.observe(ref.current);
+    return()=>{ ro.disconnect(); chartRef.current?.dispose(); };
+  },[]);
+
+  useEffect(()=>{ chartRef.current?.setOption(option,true); },[option]);
+
+  return <div ref={ref} style={{width:'100%',height:230}}/>;
+}
+
+// ===================================================
+// DASHBOARD VIEW
+// ===================================================
+function DashboardView({ data, scores, cotName }) {
+  const clusterBarOpt = {
+    tooltip:{trigger:'axis'},
+    grid:{left:40,right:20,top:20,bottom:30},
+    xAxis:{type:'category',data:['Kluster 1\nCollab','Kluster 2\nR&I+ES','Kluster 3\nPub+Award','Kluster 4\nT&L+Inc'],axisLabel:{fontSize:10,color:'#6B7280'}},
+    yAxis:{type:'value',max:40,splitLine:{lineStyle:{color:'#f1f5f9'}},axisLabel:{fontSize:10,color:'#6B7280'}},
+    series:[
+      {name:'Skor',type:'bar',barWidth:28,
+       data:[{value:scores.c1,itemStyle:{color:'#8B0000',borderRadius:[4,4,0,0]}},{value:scores.c2,itemStyle:{color:'#DC2626',borderRadius:[4,4,0,0]}},{value:scores.c3,itemStyle:{color:'#D97706',borderRadius:[4,4,0,0]}},{value:scores.c4,itemStyle:{color:'#2563EB',borderRadius:[4,4,0,0]}}],
+       label:{show:true,position:'top',fontSize:10}},
+      {name:'Maksimum',type:'bar',barWidth:28,
+       data:[20,40,20,20].map(v=>({value:v,itemStyle:{color:'#E5E7EB',borderRadius:[4,4,0,0]}})),
+       label:{show:false}},
+    ]
+  };
+
+  const acts = [
+    (data.collab||[]).length,(data.ktp||[]).length,(data.ri_proposal||[]).length,
+    (data.ri_selesai||[]).length,(data.ri_geran||[]).length,(data.expert||[]).length,
+    (data.pub||[]).length,(data.award||[]).length,(data.tl_bahan||[]).length,(data.tl_latihan||[]).length,
+  ];
+  const COLORS=['#8B0000','#A00000','#16A34A','#22C55E','#15803D','#7C3AED','#D97706','#F59E0B','#2563EB','#3B82F6'];
+  const actBarOpt = {
+    tooltip:{trigger:'item'},
+    grid:{left:110,right:20,top:8,bottom:8},
+    xAxis:{type:'value',splitLine:{lineStyle:{color:'#f1f5f9'}},axisLabel:{fontSize:10}},
+    yAxis:{type:'category',data:['1.1 Kolaborasi','1.2 KTP','2.1 Proposal R&I','2.2 Selesai R&I','2.3 Geran R&I','3.1 Perundingan','4.1 Penerbitan','5.1 Anugerah','6.1 Bahan T&L','6.2 Latihan'],axisLabel:{fontSize:10,color:'#6B7280'}},
+    series:[{type:'bar',data:acts.map((v,i)=>({value:v,itemStyle:{color:COLORS[i],borderRadius:[0,4,4,0]}})),barWidth:13,label:{show:true,position:'right',fontSize:10}}]
+  };
+
+  const clusterData = [
+    {id:'c1',label:'Kluster 1: Collaboration',sc:scores.c1,mx:20,cls:'red',weight:'20%'},
+    {id:'c2',label:'Kluster 2: R&I + Expert Services',sc:scores.c2,mx:40,cls:'red',weight:'40%'},
+    {id:'c3',label:'Kluster 3: Publication + Recognition',sc:scores.c3,mx:20,cls:'amber',weight:'20%'},
+    {id:'c4',label:'Kluster 4: T&L + Income',sc:scores.c4,mx:20,cls:'blue',weight:'20%'},
+  ];
+  const totalActs = acts.reduce((a,b)=>a+b,0);
+  const fmt = v => 'RM '+v.toLocaleString('ms-MY',{minimumFractionDigits:0});
+
+  return (
+    <div>
+      <div className="sec-hdr"><h2>📊 Dashboard KPI Semasa</h2><div className="sec-line"></div><span className="sec-badge">{cotName}</span></div>
+      <div className="kpi-row">
+        <div className="kpi red"><div className="kpi-lbl">Markah Keseluruhan</div><div className="kpi-val">{scores.total}%</div><div className="kpi-sub">Maks 100%</div></div>
+        <div className="kpi green"><div className="kpi-lbl">Jumlah Aktiviti</div><div className="kpi-val">{totalActs}</div><div className="kpi-sub">Semua elemen</div></div>
+        <div className="kpi amber"><div className="kpi-lbl">Jumlah Pendapatan</div><div className="kpi-val" style={{fontSize:18}}>{fmt(scores.incomeTotal)}</div><div className="kpi-sub">Sasaran RM 100,000</div></div>
+        <div className="kpi blue"><div className="kpi-lbl">Status Pencapaian</div><div className="kpi-val" style={{fontSize:16,paddingTop:4}}>{scores.total>=75?'🟢 Cemerlang':scores.total>=50?'🟡 Memuaskan':'🔴 Perlu Usaha'}</div><div className="kpi-sub">{scores.total>=75?'≥ 75%':scores.total>=50?'50-74%':'< 50%'}</div></div>
+      </div>
+      <div className="cluster-row">
+        {clusterData.map(cl=>{
+          const p = Math.round(cl.sc/cl.mx*100);
+          const c = scoreColor(cl.sc,cl.mx);
+          return (
+            <div key={cl.id} className="cluster">
+              <div className="cluster-head"><span className="cluster-name">{cl.label}</span><span className="cluster-weight">Wajaran {cl.weight}</span></div>
+              <div><span className="cluster-score" style={{color:c}}>{cl.sc}</span><span className="cluster-max"> / {cl.mx} mata</span></div>
+              <div className="prog-outer"><div className="prog-inner" style={{width:p+'%',background:c}}/></div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="chart-grid">
+        <div className="chart-box"><div className="chart-title">Skor per Kluster vs Maksimum</div><EChart id="db-cluster" option={clusterBarOpt}/></div>
+        <div className="chart-box"><div className="chart-title">Bilangan Rekod per Elemen</div><EChart id="db-acts" option={actBarOpt}/></div>
+      </div>
+    </div>
+  );
+}
+
+// ===================================================
+// LAMPIRAN F VIEW
+// ===================================================
+function LampiranFView({ scores, validators, onValidatorChange, cotName, year, quarter }) {
+  const fmt = v => 'RM '+v.toLocaleString('ms-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  const rows = [
+    {cl:'KLUSTER 1: COLLABORATION (Wajaran 20%, Maks 20 Mata)', isCluster:true},
+    {no:'1.1',label:'Kolaborasi Aktif (≥2 aktiviti per rakan industri)',qty:scores.qualRakan+' rakan',formula:'≥4:10 | 3:7 | 2:5 | 1:3',max:10,score:scores.s1_1},
+    {no:'1.2',label:'Projek Pemindahan Ilmu / KTP',qty:scores.ktpCount+' aktiviti',formula:'≥4:10 | 3:8 | 2:4 | <2:0',max:10,score:scores.s1_2},
+    {no:'',label:'Jumlah Kluster 1',qty:'',formula:'min(20, 1.1+1.2)',max:20,score:scores.c1,isSubtotal:true},
+    {cl:'KLUSTER 2: R&I + EXPERT SERVICES (Wajaran 40%, Maks 40 Mata)', isCluster:true},
+    {no:'2.1',label:'Proposal Penyelidikan (Status: Selesai)',qty:scores.propSelesai+' proposal',formula:'Bil. × 3 (maks 15)',max:15,score:scores.s2_1},
+    {no:'2.2',label:'Projek R&I Selesai',qty:scores.riDoneCount+' projek',formula:'Bil. × 2 (maks 10)',max:10,score:scores.s2_2},
+    {no:'2.3',label:'Geran Penyelidikan Diperoleh',qty:scores.riGrantCount+' geran',formula:'Bil. × 5 (maks 5)',max:5,score:scores.s2_3},
+    {no:'3.1',label:'Perkhidmatan Perundingan',qty:scores.esComp+' selesai, '+scores.esOngoing+' aktif',formula:'Comp×5 + Ongoing×2 (maks 30)',max:30,score:scores.s2_4},
+    {no:'',label:'Jumlah Kluster 2',qty:'',formula:'min(40, 2.1+2.2+2.3+3.1)',max:40,score:scores.c2,isSubtotal:true},
+    {cl:'KLUSTER 3: PUBLICATION + RECOGNITION (Wajaran 20%, Maks 20 Mata)', isCluster:true},
+    {no:'4.1',label:'Penerbitan (Indexed/Proceeding/Books)',qty:scores.indexed+'I + '+scores.proceeding+'P + '+scores.books+'B',formula:'Indexed×4 + Proc×2 + Books×5 (maks 15)',max:15,score:scores.s3_1},
+    {no:'5.1',label:'Pengiktirafan & Anugerah',qty:scores.intl+'Intl + '+scores.natl+'Nat + '+scores.poly+'Poly',formula:'Intl×5 + Nat×3 + Poly×1 (maks 15)',max:15,score:scores.s3_2},
+    {no:'',label:'Jumlah Kluster 3',qty:'',formula:'min(20, 4.1+5.1)',max:20,score:scores.c3,isSubtotal:true},
+    {cl:'KLUSTER 4: T&L + INCOME GENERATION (Wajaran 20%, Maks 20 Mata)', isCluster:true},
+    {no:'6.1/6.2',label:'Bahan PdP (×3 mata) + Program Latihan (×2 mata)',qty:scores.tlBahanCount+' bahan, '+scores.tlLatihanCount+' program',formula:'(Bahan×3)+(Latihan×2) maks 15',max:15,score:scores.s4_tl},
+    {no:'7.1',label:'Jumlah Pendapatan & Geran (Sasaran RM 100,000)',qty:fmt(scores.incomeTotal),formula:'≥100k:15 | 70k:13 | 30k:9 | 5k:5 | <5k:0',max:15,score:scores.s4_inc},
+    {no:'',label:'Jumlah Kluster 4',qty:'',formula:'min(20, 6+7)',max:20,score:scores.c4,isSubtotal:true},
+  ];
+
+  const VALIDATOR_CFG = [
+    {key:'tpa',title:'👑 Chief Validator - Timbalan Pengarah Akademik (TPA)',sub:'Pengesahan Peringkat Tertinggi'},
+    {key:'pm',title:'✅ Validator 1 - Pengurus CoT',sub:'Pengesahan Pengurusan CoT'},
+    {key:'coord',title:'📋 Validator 2 - Penyelaras CoT POLIMAS',sub:'Pengesahan Akhir Politeknik'},
+  ];
+
+  return (
+    <div>
+      <div className="sec-hdr"><h2>✅ Borang Lampiran F - Skor KPI &amp; Pengesahan</h2><div className="sec-line"></div>
+        <button className="btn btn-cot btn-sm" onClick={()=>window.print()}>🖨️ Cetak / PDF</button>
+      </div>
+      <div style={{marginBottom:12,padding:'10px 14px',background:'var(--red-l)',borderRadius:8,border:'1px solid #fecaca',fontSize:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span><b style={{color:'var(--cot)'}}>📋 {cotName}</b> · Tahun {year} · Sukuan {quarter}</span>
+        <span style={{fontWeight:800,fontSize:14,color:scoreColor(scores.total,100)}}>{scores.total}% / 100%</span>
+      </div>
+      <div className="card">
+        <div className="card-title">📋 Jadual Skor Rasmi KPI CoT</div>
+        <div style={{overflow:'auto'}}>
+          <table className="lf-table">
+            <thead><tr><th style={{width:60}}>Bil.</th><th>Kategori Fokus / Elemen</th><th>Kuantiti Sebenar</th><th>Kaedah Pengiraan</th><th style={{width:70,textAlign:'center'}}>Maks</th><th style={{width:90,textAlign:'center'}}>Skor</th></tr></thead>
+            <tbody>
+              {rows.map((r,i)=>{
+                if(r.isCluster) return <tr key={i} className="cl-hdr"><td colSpan={6}>{r.cl}</td></tr>;
+                if(r.isSubtotal) return (
+                  <tr key={i} style={{background:'#fef9f9',fontWeight:700}}>
+                    <td colSpan={2}>{r.label}</td>
+                    <td></td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{r.formula}</td>
+                    <td style={{textAlign:'center'}}>{r.max}</td>
+                    <td style={{textAlign:'center'}}><span className={`score-chip ${scoreChipClass(r.score,r.max)}`}>{r.score}</span></td>
+                  </tr>
+                );
+                return (
+                  <tr key={i}>
+                    <td style={{color:'var(--muted)',fontWeight:600}}>{r.no}</td>
+                    <td>{r.label}</td>
+                    <td style={{color:'var(--blue)',fontWeight:500}}>{r.qty}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{r.formula}</td>
+                    <td style={{textAlign:'center'}}>{r.max}</td>
+                    <td style={{textAlign:'center'}}><span className={`score-chip ${scoreChipClass(r.score,r.max)}`}>{r.score}</span></td>
+                  </tr>
+                );
+              })}
+              <tr className="tot-row">
+                <td colSpan={5}>MARKAH KESELURUHAN KPI (%)</td>
+                <td style={{textAlign:'center',fontSize:16}}>{scores.total}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="sec-hdr" style={{marginTop:20}}><h2>🖊️ Aliran Pengesahan Bertingkat</h2><div className="sec-line"></div></div>
+      {VALIDATOR_CFG.map(vc=>(
+        <ValidatorBlock key={vc.key} cfg={vc} data={validators[vc.key]||{}} onChange={d=>onValidatorChange(vc.key,d)}/>
+      ))}
+    </div>
+  );
+}
+
+function ValidatorBlock({ cfg, data, onChange }) {
+  const [form, setForm] = useState({nama:data.nama||'',jawatan:data.jawatan||'',tarikh:data.tarikh||'',status:data.status||'',catatan:data.catatan||'',signed:data.signed||false});
+  function save() {
+    onChange(form);
+    showToast('Pengesahan '+cfg.key.toUpperCase()+' disimpan!');
+  }
+  function sign() {
+    const updated = {...form, signed:true, tarikh: form.tarikh||new Date().toISOString().slice(0,10)};
+    setForm(updated);
+    onChange(updated);
+    showToast('✍️ Tandatangan digital direkod!');
+  }
+  const statusBadge = form.status==='approved'?{bg:'var(--green-l)',color:'var(--green)',text:'✅ Disahkan'}:form.status==='rejected'?{bg:'var(--red-l)',color:'var(--cot)',text:'❌ Ditolak'}:{bg:'var(--amber-l)',color:'var(--amber)',text:'⏳ Menunggu'};
+
+  return (
+    <div className="val-block">
+      <div className="val-hdr">
+        <div><div className="val-title">{cfg.title}</div><div className="val-sub">{cfg.sub}</div></div>
+        <span className="badge" style={{background:statusBadge.bg,color:statusBadge.color}}>{statusBadge.text}</span>
+      </div>
+      <div className="form-grid" style={{marginBottom:10}}>
+        <div className="form-group"><label className="form-label">Nama</label><input className="form-input" value={form.nama} onChange={e=>setForm(p=>({...p,nama:e.target.value}))} placeholder="Nama pengesah..."/></div>
+        <div className="form-group"><label className="form-label">Jawatan</label><input className="form-input" value={form.jawatan} onChange={e=>setForm(p=>({...p,jawatan:e.target.value}))} placeholder="Jawatan..."/></div>
+        <div className="form-group"><label className="form-label">Tarikh</label><input className="form-input" type="date" value={form.tarikh} onChange={e=>setForm(p=>({...p,tarikh:e.target.value}))}/></div>
+        <div className="form-group"><label className="form-label">Status</label>
+          <select className="form-input" value={form.status} onChange={e=>setForm(p=>({...p,status:e.target.value}))}>
+            <option value="">-- Pilih Status --</option>
+            <option value="approved">✅ Disahkan</option>
+            <option value="rejected">❌ Ditolak / Perlu Semak</option>
+            <option value="pending">⏳ Dalam Semakan</option>
+          </select>
+        </div>
+      </div>
+      <div className="form-group" style={{marginBottom:10}}>
+        <label className="form-label">Catatan / Ulasan</label>
+        <textarea className="form-input" rows={2} value={form.catatan} onChange={e=>setForm(p=>({...p,catatan:e.target.value}))} placeholder="Catatan pengesahan atau sebab penolakan jika ada..."/>
+      </div>
+      <div style={{display:'flex',gap:10,alignItems:'center'}}>
+        <div className={`sig-box${form.signed?' signed':''}`} onClick={sign} style={{flex:1}}>
+          {form.signed?`✅ Tandatangan direkod - ${form.tarikh}`:'✍️ Klik untuk Tandatangan Digital'}
+        </div>
+        <button className="btn btn-cot" onClick={save}>💾 Simpan</button>
+      </div>
+    </div>
+  );
+}
+
+// ===================================================
+// EVIDEN VIEW
+// ===================================================
+function EvidenView() {
+  return (
+    <div>
+      <div className="sec-hdr"><h2>📎 Pengurusan Eviden</h2><div className="sec-line"></div></div>
+      <div className="card">
+        <div className="card-title">📁 Status Dokumen Sokongan</div>
+        <p style={{color:'var(--muted)',fontSize:12,marginBottom:16}}>Muat naik fail eviden (PDF/imej) bagi setiap rekod aktiviti untuk memastikan pengesahan berjalan lancar.</p>
+        <div style={{display:'grid',gap:10}}>
+          {['1.1 Kolaborasi Aktif','1.2 KTP','2.1 Proposal R&I','2.2 Projek Selesai','2.3 Geran','3.1 Perundingan','4.1 Penerbitan','5.1 Anugerah','6.1 Bahan T&L','6.2 Program Latihan'].map(sec=>(
+            <div key={sec} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',background:'var(--bg)',borderRadius:8,border:'1px solid var(--border)'}}>
+              <span style={{fontSize:12,fontWeight:600}}>{sec}</span>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <label className="evid-btn" style={{cursor:'pointer'}}>
+                  📎 Muat Naik
+                  <input type="file" style={{display:'none'}} accept=".pdf,.png,.jpg,.jpeg" onChange={()=>showToast('Eviden untuk '+sec+' berjaya dimuat naik!')}/>
+                </label>
+                <span className="badge bg-amber">⚠ Tiada Eviden</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===================================================
+// LAMPIRAN E - ELEMENT VIEWS
+// ===================================================
+function ElementView({ elemKey, subs, data, onDataChange, scores }) {
+  const [activeTab, setActiveTab] = useState(subs[0].key);
+  const [modal, setModal] = useState(null);
+
+  function handleAdd(section) { setModal({section, record:null}); }
+  function handleEdit(section, record) { setModal({section, record}); }
+  function handleDelete(section, id) {
+    const updated = (data[section]||[]).filter(r=>r.id!==id);
+    onDataChange(section, updated);
+    showToast('Rekod berjaya dipadam!','error');
+  }
+  function handleSave(section, record) {
+    const existing = data[section]||[];
+    const idx = existing.findIndex(r=>r.id===record.id);
+    const updated = idx>=0 ? existing.map(r=>r.id===record.id?record:r) : [...existing,record];
+    onDataChange(section, updated);
+  }
+
+  return (
+    <div>
+      {modal && <ModalForm section={modal.section} record={modal.record} onSave={r=>handleSave(modal.section,r)} onClose={()=>setModal(null)}/>}
+      <div className="elem-tabs">
+        {subs.map(s=>(
+          <button key={s.key} className={`et-btn${activeTab===s.key?' active':''}`} onClick={()=>setActiveTab(s.key)}>
+            {s.label} <span style={{background:activeTab===s.key?'rgba(255,255,255,.25)':'var(--bg)',color:activeTab===s.key?'#fff':'var(--muted)',padding:'1px 6px',borderRadius:99,fontSize:10,marginLeft:4,fontWeight:700}}>{(data[s.key]||[]).length}</span>
+          </button>
+        ))}
+      </div>
+      {subs.map(s=>{
+        if(activeTab!==s.key) return null;
+        const colKeyMap = {
+          collab:['rakan','tajuk','status','nilai'],
+          ktp:['jenis','tajuk','rakan','status','nilai'],
+          ri_proposal:['tajuk','ketua','status','geran'],
+          ri_selesai:['tajuk','pembangunan','mula','tamat'],
+          ri_geran:['tajuk','ketua','penaja','nilai'],
+          expert:['klien','status','mula','tamat','nilai'],
+          pub:['kategori','tajuk','penulis','status'],
+          award:['peringkat','tajuk','badan','tarikh','nilai'],
+          tl_bahan:['tajuk','jenis','status','dep'],
+          tl_latihan:['tajuk','bidang','peserta','tarikh','yuran'],
+        };
+        const sl = s.key==='income'?null:{collab:'1.1',ktp:'1.2',ri_proposal:'2.1',ri_selesai:'2.2',ri_geran:'2.3',expert:'3.1',pub:'4.1',award:'5.1',tl_bahan:'6.1',tl_latihan:'6.2'}[s.key];
+        const scVal = {collab:scores.s1_1,ktp:scores.s1_2,ri_proposal:scores.s2_1,ri_selesai:scores.s2_2,ri_geran:scores.s2_3,expert:scores.s2_4,pub:scores.s3_1,award:scores.s3_2,tl_bahan:scores.s4_tl,tl_latihan:scores.s4_tl}[s.key];
+        if(s.key==='income') return <IncomeSection key="income" rows={data.income||INCOME_SOURCES.map((src,i)=>({id:'inc_'+i,source:src,butiran:'',gen:0,end:0,grant:0,spon:0}))} onChange={rows=>onDataChange('income',rows)} scoreValue={scores.s4_inc}/>;
+        return <CRUDTable key={s.key} section={s.key} rows={data[s.key]||[]} onAdd={()=>handleAdd(s.key)} onEdit={r=>handleEdit(s.key,r)} onDelete={id=>handleDelete(s.key,id)} scoreLabel={sl} scoreValue={scVal} colKeys={colKeyMap[s.key]}/>;
+      })}
+    </div>
+  );
+}
+
+// ===================================================
+// ELEMENT PAGE CONFIG
+// ===================================================
+const ELEMENT_PAGES = [
+  { id:'elem1', icon:'🤝', label:'1.0 Collaboration', title:'Element 1.0 - Collaboration', subs:[{key:'collab',label:'1.1 Kolaborasi Aktif'},{key:'ktp',label:'1.2 KTP'}] },
+  { id:'elem2', icon:'🔬', label:'2.0 Research & Innovation', title:'Element 2.0 - Research & Innovation', subs:[{key:'ri_proposal',label:'2.1 Proposal R&I'},{key:'ri_selesai',label:'2.2 Projek Selesai'},{key:'ri_geran',label:'2.3 Geran Diperoleh'}] },
+  { id:'elem3', icon:'🎓', label:'3.0 Expert Services', title:'Element 3.0 - Expert Services', subs:[{key:'expert',label:'3.1 Perundingan'}] },
+  { id:'elem4', icon:'📖', label:'4.0 Publications', title:'Element 4.0 - Publications', subs:[{key:'pub',label:'4.1 Penerbitan'}] },
+  { id:'elem5', icon:'🏆', label:'5.0 Recognitions', title:'Element 5.0 - Recognitions & Awards', subs:[{key:'award',label:'5.1 Pengiktirafan'}] },
+  { id:'elem6', icon:'📚', label:'6.0 Teaching & Learning', title:'Element 6.0 - Teaching & Learning', subs:[{key:'tl_bahan',label:'6.1 Bahan PdP'},{key:'tl_latihan',label:'6.2 Program Latihan'}] },
+  { id:'elem7', icon:'💰', label:'7.0 Income Generation', title:'Element 7.0 - Income Generation', subs:[{key:'income',label:'7.1 Ringkasan Pendapatan'}] },
+];
+
+const ALL_SECTIONS = ['collab','ktp','ri_proposal','ri_selesai','ri_geran','expert','pub','award','tl_bahan','tl_latihan','income'];
+
+// ===================================================
+// APP
+// ===================================================
+function App() {
+  const [cotIdx, setCotIdx] = useState(0);
+  const [year, setYear] = useState('2025');
+  const [quarter, setQuarter] = useState(1);
+  const [activeView, setActiveView] = useState('dashboard');
+  const [data, setData] = useState({});
+  const [validators, setValidators] = useState({});
+
+  const cot = COT_LIST[cotIdx];
+
+  // Load data when cot/year/quarter changes
+  useEffect(()=>{
+    const loaded = {};
+    ALL_SECTIONS.forEach(sec=>{ loaded[sec] = loadData(cot.id, year, quarter, sec); });
+    setData(loaded);
+    const val = loadObj(cot.id, year, quarter, 'validators', {});
+    setValidators(val);
+  },[cotIdx, year, quarter]);
+
+  // Save on data change
+  function updateSection(section, rows) {
+    const updated = {...data, [section]:rows};
+    setData(updated);
+    saveData(cot.id, year, quarter, section, rows);
+  }
+
+  function updateValidators(key, val) {
+    const updated = {...validators, [key]:val};
+    setValidators(updated);
+    saveObj(cot.id, year, quarter, 'validators', updated);
+  }
+
+  function loadSample(cotId) {
+    const sample = cotId==='cmep' ? sampleCMeP() : sampleCToP();
+    const targetCotIdx = COT_LIST.findIndex(c=>c.id===cotId);
+    if(targetCotIdx !== -1) setCotIdx(targetCotIdx);
+    setQuarter(3);
+    const loaded = {};
+    ALL_SECTIONS.forEach(sec=>{
+      const rows = sample[sec]||[];
+      loaded[sec]=rows;
+      saveData(COT_LIST[targetCotIdx].id, year, 3, sec, rows);
+    });
+    setData(loaded);
+    showToast('✅ Data sampel '+cotId.toUpperCase()+' (Sukuan 3) berjaya dimuatkan!');
+    setActiveView('dashboard');
+  }
+
+  const scores = calcScores(data);
+  const progColor = scores.total>=75?'var(--green)':scores.total>=50?'var(--amber)':'var(--cot)';
+
+  const NAV_ITEMS = [
+    { id:'dashboard', icon:'📊', label:'Dashboard Ringkasan' },
+    { id:'lampiran-e', icon:'📝', label:'Lampiran E - Input Aktiviti', isHeader:true },
+    ...ELEMENT_PAGES.map(e=>({id:e.id, icon:e.icon, label:e.label, indent:true})),
+    { id:'lampiran-f-sep', isHeader:true, label:'Lampiran F' },
+    { id:'lampiranf', icon:'✅', label:'Borang Pengesahan KPI' },
+    { id:'eviden', icon:'📎', label:'Pengurusan Eviden' },
+  ];
+
+  const allSectionCount = ALL_SECTIONS.filter(s=>s!=='income').reduce((acc,s)=>acc+(data[s]||[]).length,0);
+
+  return (
+    <>
+      <ToastContainer/>
+      {/* SIDEBAR */}
+      <div className="sidebar">
+        <div className="sb-logo-area">
+          <div className="sb-logo-img">
+            🏛️
+          </div>
+          <div className="sb-logo-text">
+            <div className="t1">CENTRE OF TECHNOLOGY</div>
+            <div className="t2">POLITEKNIK MALAYSIA</div>
+          </div>
+        </div>
+        <div className="sb-cot-badge">
+          <div className="cot-name">{cot.id.toUpperCase()}</div>
+          <div className="cot-sub">{cot.poly}</div>
+        </div>
+        <div className="sb-section">Menu Utama</div>
+        {NAV_ITEMS.map((item,i)=>{
+          if(item.isHeader) return <div key={i} className="sb-section" style={{paddingTop:14}}>{item.label}</div>;
+          return (
+            <div key={item.id} className={`nav-item${activeView===item.id?' active':''}${item.indent?' ':''}`}
+              style={item.indent?{paddingLeft:24}:{}}
+              onClick={()=>setActiveView(item.id)}>
+              <span className="nav-icon">{item.icon}</span>
+              <span>{item.label}</span>
+              {item.id==='dashboard' && <span className="nav-badge">{scores.total}%</span>}
+            </div>
+          );
+        })}
+        <div style={{padding:'12px 14px',marginTop:'auto'}}>
+          <div style={{fontSize:10,color:'rgba(255,255,255,.45)',marginBottom:6,textTransform:'uppercase',letterSpacing:'.5px',fontWeight:700}}>Data Sampel Demo</div>
+          <button className="btn btn-ghost btn-sm" style={{width:'100%',marginBottom:5,fontSize:11,justifyContent:'center'}} onClick={()=>loadSample('cmep')}>📦 Sampel CMeP (S3)</button>
+          <button className="btn btn-ghost btn-sm" style={{width:'100%',fontSize:11,justifyContent:'center'}} onClick={()=>loadSample('ctop')}>📦 Sampel CToP (S3)</button>
+        </div>
+        <div className="sb-footer">Sistem KPI CoT · v2.0</div>
+      </div>
+
+      {/* MAIN */}
+      <div className="main">
+        {/* TOPBAR */}
+        <div className="topbar">
+          <span className="tb-title">
+            {activeView==='dashboard'?'📊 Dashboard KPI':activeView==='lampiranf'?'✅ Lampiran F - Pengesahan':activeView==='eviden'?'📎 Pengurusan Eviden':ELEMENT_PAGES.find(e=>e.id===activeView)?.title||'Sistem KPI CoT'}
+          </span>
+          <select className="tb-select" value={cotIdx} onChange={e=>setCotIdx(Number(e.target.value))}>
+            {COT_LIST.map((c,i)=><option key={c.id} value={i}>{c.id.toUpperCase()} - {c.poly}</option>)}
+          </select>
+          <select className="tb-select" value={year} onChange={e=>setYear(e.target.value)}>
+            <option>2025</option><option>2026</option><option>2027</option>
+          </select>
+          <div className="quarter-tabs">
+            {QUARTERS.map(q=><button key={q} className={`qt-btn${quarter===q?' active':''}`} onClick={()=>setQuarter(q)}>S{q}</button>)}
+          </div>
+        </div>
+
+        {/* CONTENT */}
+        <div className="content">
+          {activeView==='dashboard' && <DashboardView data={data} scores={scores} cotName={cot.name}/>}
+          {ELEMENT_PAGES.map(ep=>activeView===ep.id?(
+            <div key={ep.id}>
+              <div className="sec-hdr"><h2>{ep.icon} {ep.title}</h2><div className="sec-line"></div><span className="sec-badge">{(ep.subs.filter(s=>s.key!=='income').reduce((a,s)=>a+(data[s.key]||[]).length,0))} rekod</span></div>
+              <ElementView elemKey={ep.id} subs={ep.subs} data={data} onDataChange={updateSection} scores={scores}/>
+            </div>
+          ):null)}
+          {activeView==='lampiranf' && <LampiranFView scores={scores} validators={validators} onValidatorChange={updateValidators} cotName={cot.name} year={year} quarter={quarter}/>}
+          {activeView==='eviden' && <EvidenView/>}
+        </div>
+      </div>
+
+      {/* STICKY BAR */}
+      <div className="sticky-bar">
+        <span className="sb-label">Skor KPI Semasa:</span>
+        <span className="sb-val" style={{color:progColor}}>{scores.total}% / 100%</span>
+        <div className="sb-prog-wrap"><div className="sb-prog-fill" style={{width:scores.total+'%',background:progColor}}/></div>
+        <div className="sb-actions">
+          <button className="btn btn-ghost btn-sm" onClick={()=>showToast('💾 Data sudah disimpan dalam localStorage!')}>💾 Status Simpan</button>
+          <button className="btn btn-cot btn-sm" onClick={()=>setActiveView('lampiranf')}>📋 Semak Lampiran F</button>
+          <button className="btn btn-success btn-sm" onClick={()=>{ setActiveView('lampiranf'); showToast('📤 Borang berjaya dihantar untuk pengesahan!'); }}>📤 Hantar Pengesahan</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
+</body>
+</html>
